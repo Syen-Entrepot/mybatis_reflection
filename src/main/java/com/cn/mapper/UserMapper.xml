@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cn.mapper.UserMapper">
+
+    <!--mybatis对于简单的单表查询一般使用resultType就可以解决
+    对于多表联合查询往往都需要使用resultMap进行详细的描述
+    怎么封装，规矩由我们定
+    property的值是java里面的javabean的属性,column是数据库里面查询出来的列
+    -->
+    <resultMap id="userBaseMap" type="com.cn.pojo.UserWithDetail">
+        <!--user的基本信息封装-->
+        <id property="id" column="uid"/>
+        <result property="phone" column="phone"/>
+        <result property="password" column="password"/>
+        <result property="creatdate" column="create_date"/>
+        <result property="states" column="states"/>
+        <!--留给查询封装方式三extends-->
+    </resultMap>
+
+    <!--官方推荐使用查询封装方法一-->
+    <resultMap id="userWithDetilMap" type="com.cn.pojo.UserWithDetail">
+        <!--user的基本信息封装-->
+     <id property="id" column="uid"/>
+        <result property="phone" column="phone"/>
+        <result property="password" column="password"/>
+        <result property="creatdate" column="create_date"/>
+        <result property="states" column="states"/>
+        <!--UserDetail封装-->
+        <association property="userDetail" javaType="com.cn.pojo.UserDetail">
+             <id property="id" column="udId"/>
+            <result property="address" column="address"/>
+            <result property="cid" column="cid"/>
+        </association>
+
+    </resultMap>
+
+    <select id="queryByut_Id" resultMap="userWithDetilMap">
+
+        SELECT t1.`id` as uid,t1.`phone`,t1.`password`,t1.`create_date`,t1.`states`,
+               t2.`id` as udId,t2.`address`,t2.`cid`
+        from user t1, user_detail t2
+        <where>
+            t1.`id`=t2.`u_id`
+            and t1.`id`=#{id}
+        </where>
+
+    </select>
+    <!--查询封装方式二：所以不推荐使用
+    查询封装方式三
+     支持分步查询
+     如果有的查询太复杂了,推荐使用分步查询
+    -->
+    <resultMap id="userWithDetilMap3" extends="userBaseMap" type="com.cn.pojo.UserWithDetail">
+        <!--UserDetail封装-->
+        <association property="userDetail" select="com.cn.mapper.UserDetailMapper.queryByUserId" column="uid">
+
+        </association>
+
+    </resultMap>
+    <select id="queryByStep" resultMap="userWithDetilMap3">
+        SELECT t1.`id` as uid,t1.`phone`,t1.`password`,t1.`create_date`,t1.`states`
+        from user t1
+        <where>
+            and t1.`id`=#{id}
+        </where>
+    </select>
+
+</mapper>
